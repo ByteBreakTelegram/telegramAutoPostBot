@@ -1,0 +1,80 @@
+version: '3'
+
+services:
+
+  nginx:
+    build:
+      context: ./nginx/
+      dockerfile: Dockerfile
+    ports:
+      - "0.0.0.0:8045:80"
+    depends_on:
+      - php
+    volumes:
+      - ./nginx/conf.d/site.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/conf.d/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./../:/app/
+
+  db:
+    build:
+      context: ./postgres/
+      dockerfile: Dockerfile
+    env_file: ./../.env
+    volumes:
+      - ./postgres/backup:/backup
+      - ./postgres/data:/var/lib/postgresql/data
+    ports:
+      - "0.0.0.0:${POSTGRES_PORT}:5432"
+
+  redis:
+    build:
+      context: ./redis/
+      dockerfile: Dockerfile
+    command: ["redis-server", "/etc/redis/redis.conf"]
+    volumes:
+      - ./redis/data:/data
+      - ./redis/config/redis.conf:/etc/redis/redis.conf
+
+
+  php:
+    build:
+      context: ./php-fpm/
+      dockerfile: Dockerfile
+    hostname: php
+    volumes:
+      - ./../:/app:cached
+    depends_on:
+      - db
+      - redis
+
+
+  queue:
+    build:
+      context: ./php-cli/
+      dockerfile: Dockerfile
+    hostname: queue
+    restart: always
+    environment:
+      PHP_ENABLE_ELASTIC_APM: ${PHP_ENABLE_ELASTIC_APM}
+    volumes:
+      - ./../:/app:cached
+    depends_on:
+      - db
+      - redis
+    command: php artisan horizon -v
+
+
+  schedule:
+    build:
+      context: ./php-cli/
+      dockerfile: Dockerfile
+    hostname: schedule
+    restart: always
+    environment:
+      PHP_ENABLE_ELASTIC_APM: ${PHP_ENABLE_ELASTIC_APM}
+    volumes:
+      - ./../:/app:cached
+    depends_on:
+      - db
+      - redis
+    command: php artisan schedule:work

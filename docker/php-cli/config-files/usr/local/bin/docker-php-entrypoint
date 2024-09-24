@@ -1,0 +1,36 @@
+#!/bin/sh
+set -e
+
+# Set permissions based on ENV variable (debian only)
+if [ -x "$(command -v usermod)" ]; then
+    usermod -u ${PHP_USER_ID} www-data
+fi
+
+# Enable xdebug by ENV variable
+rm -f /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+if [ 0 -ne "${PHP_ENABLE_XDEBUG:-0}" ]; then
+    docker-php-ext-enable xdebug
+    echo "Enabled xdebug"
+fi
+# Enable xdebug by ENV variable
+rm -f /usr/local/etc/php/conf.d/docker-php-ext-xhprof.ini
+if [ 0 -ne "${PHP_ENABLE_XHPROF:-0}" ]; then
+    docker-php-ext-enable xhprof
+    echo "Enabled xhprof"
+fi
+# Enable elastic_apm by ENV variable
+rm -f /usr/local/etc/php/conf.d/*elastic-apm*.ini
+if [ 0 -ne "${PHP_ENABLE_ELASTIC_APM:-0}" ]; then
+    ln -s /opt/elastic/apm-agent-php/etc/elastic-apm.ini /usr/local/etc/php/conf.d/elastic-apm.ini
+    ln -s /config/elastic-apm-custom.ini /usr/local/etc/php/conf.d/elastic-apm-custom.ini
+    echo "Enabled elastic_apm"
+fi
+
+export PS1="\e[0;35mphd \e[0;37m\u container \h \e[0;32m\w \e[0;0m\n$ "
+
+# first arg is `-f` or `--some-option`
+if [ "${1#-}" != "$1" ]; then
+    set -- php-fpm "$@"
+fi
+
+exec "$@"
