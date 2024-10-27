@@ -118,6 +118,20 @@ abstract class Command
         );
     }
 
+    /**
+     * Если сообщение от бота, редактируем его
+     * @param string $message
+     * @param $replyMarkup
+     * @return void
+     */
+    protected function editOrReplyMessageText(string $message, $replyMarkup = null)
+    {
+        if ($this->message->getFrom()->isBot()) {
+            $this->editMessageText($message, $replyMarkup);
+        } else {
+            $this->replyWithMessage($message, $replyMarkup);
+        }
+    }
 
     /**
      * Ответить молча, чтоб пропали часики на кнопке $this->answerCallbackQuery(null, false);

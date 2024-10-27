@@ -20,28 +20,28 @@ class TelegramHelpMenu
     public static function main(User $user, array $linesMenu = []): InlineKeyboardMarkup
     {
         $btmInline = [
-            [
-                [
-                    'text' => 'Инструкция',
-                    'callback_data' => 'short::' . TelegramCache::setValue(
-                            $user->id,
-                            uniqid($user->id . ':'),
-                            [
-                                'classCommand' => HelpCommand::class,
-                            ],
-                        )
-                ],
-                [
-                    'text' => 'Популярные вопросы',
-                    'web_app' => ['url' => 'https://en.com/faq/']
-                ],
-            ],
-            [
-                [
-                    'text' => 'Техподдрежка',
-                    'url' => 'https://t.me/dfdf',
-                ]
-            ],
+//            [
+//                [
+//                    'text' => 'Инструкция',
+//                    'callback_data' => 'short::' . TelegramCache::setValue(
+//                            $user->id,
+//                            uniqid($user->id . ':'),
+//                            [
+//                                'classCommand' => HelpCommand::class,
+//                            ],
+//                        )
+//                ],
+//                [
+//                    'text' => 'Популярные вопросы',
+//                    'web_app' => ['url' => 'https://en.com/faq/']
+//                ],
+//            ],
+//            [
+//                [
+//                    'text' => 'Техподдрежка',
+//                    'url' => 'https://t.me/dfdf',
+//                ]
+//            ],
         ];
 
         foreach ($linesMenu as $lineMenu) {

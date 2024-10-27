@@ -2,7 +2,8 @@
 
 namespace App\Models\Enums;
 
-use App\Models\Enums\HasLabel;
+
+use App\Models\Enums\Core\HasLabel;
 
 enum UserRole: int implements HasLabel
 {
