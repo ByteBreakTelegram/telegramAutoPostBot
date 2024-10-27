@@ -7,7 +7,9 @@ use App\Models\Enums\ChannelPostStatus;
 use App\Models\Traits\TableName;
 use Carbon\Carbon;
 use App\Models\Core\Model;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * В таблице хранятся посты из каналов источников
@@ -15,18 +17,21 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $id
  * @property int $channel_id
  * @property int $telegram_message_id
- * @property string $telegram_media_group_id
+ * @property string|null $telegram_media_group_id
  * @property ChannelPostStatus $status_const
- * @property int $target_channel_id
- * @property int $target_telegram_message_id
- * @property int $content
+ * @property int|null $target_channel_id
+ * @property int|null $target_telegram_message_id
+ * @property string $content
  * @property int $priority
+ * @property Carbon|null $published_at
  *
  * @property Carbon $created_at
  * @property Carbon $updated_at
  *
  *
- * @property Channel $targetChannel
+ * @property Channel $channel
+ * @property Channel|null $targetChannel
+ * @property Collection<int, ChannelPostFile> $channelPostFiles
  *
  */
 class ChannelPost extends Model
@@ -50,6 +55,7 @@ class ChannelPost extends Model
         'target_telegram_message_id',
         'content',
         'priority',
+        'published_at',
     ];
 
     /**
@@ -67,6 +73,7 @@ class ChannelPost extends Model
         'target_telegram_message_id' => 'integer',
         'content' => 'string',
         'priority' => 'integer',
+        'published_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -83,6 +90,7 @@ class ChannelPost extends Model
             'target_telegram_message_id' => trans('Опубликованное сообщение'),
             'content' => trans('Содержимое'),
             'priority' => trans('Приоритет'),
+            'published_at' => trans('Дата публикации'),
             'created_at' => trans('Создано'),
             'updated_at' => trans('Обновлено'),
         ];
@@ -103,5 +111,15 @@ class ChannelPost extends Model
     public function targetChannel(): BelongsTo
     {
         return $this->belongsTo(Channel::class);
+    }
+
+    public function channel(): BelongsTo
+    {
+        return $this->belongsTo(Channel::class);
+    }
+
+    public function channelPostFiles(): HasMany
+    {
+        return $this->hasMany(ChannelPostFile::class);
     }
 }

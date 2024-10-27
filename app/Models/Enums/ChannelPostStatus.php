@@ -22,7 +22,7 @@ enum ChannelPostStatus: int implements HasLabel
     public function label(): string
     {
         return match ($this) {
-            self::QUEUE => trans('В ожидании'),
+            self::QUEUE => trans('В очереди на публикацию'),
             self::PUBLISHED => trans('Опубликован'),
             self::ERROR => trans('Ошибка'),
             self::PAUSED => trans('Приостановлен'),

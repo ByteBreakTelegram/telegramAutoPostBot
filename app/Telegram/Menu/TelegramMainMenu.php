@@ -29,6 +29,9 @@ class TelegramMainMenu
             ],
             [
                 [
+                    'text' => trans('Настройка каналов'),
+                ],
+                [
                     'text' => trans('Настройки'),
                 ],
             ],

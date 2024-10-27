@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Telegram\Adapters;
 
+use App\Helpers\StringHelper;
+use App\Models\Enums\ChannelPostInterval;
 use App\Models\Enums\ChannelStatus;
 use App\Models\Enums\ChannelType;
 use App\Repositories\ChannelPostRepository;
@@ -44,11 +46,18 @@ readonly class TelegramChannelPostAdaptor
 
         // Если канал не найден — создаем новый канал
         if (!$channel) {
+            // Первый добавленный канал делаем источников, остальные для публикаций
+            $channelFilter = new ChannelFilter();
+            $isFirst = !$this->channelRepository->findByFilter($channelFilter)->exists();
+
             $channelModelDto = new ChannelModelDto();
             $channelModelDto->title = $message->getChat()->getTitle();
             $channelModelDto->telegram_channel_id = $message->getChat()->getId();
-            $channelModelDto->type_const = ChannelType::TARGET;
-            $channelModelDto->status_const = ChannelStatus::PAUSED;
+            $channelModelDto->type_const = $isFirst ? ChannelType::SOURCE : ChannelType::TARGET;
+            $channelModelDto->status_const = $isFirst ? ChannelStatus::ACTIVE : ChannelStatus::PAUSED;
+            $channelModelDto->post_interval_const = $isFirst ? null : ChannelPostInterval::THREE_DAYS;
+            $channelModelDto->post_time = $isFirst ? null : '12:30';
+            $channelModelDto->code = StringHelper::transliterate($channelModelDto->title);
             $channel = $this->channelModelService->create($channelModelDto);
         }
         $result->channelId = $channel->id;
@@ -69,9 +78,10 @@ readonly class TelegramChannelPostAdaptor
         $channelPostFilter = new ChannelPostFilter();
         $channelPostFilter->telegram_message_ids = [$result->telegramMessageId];
         $channelPost = $this->channelPostRepository->findByFilter($channelPostFilter)->first();
-
         $result->channelPost = $channelPost;
-
+        if ($result->content->keyExist('targetChannelId')) {
+            $result->targetChannelId = $result->content->targetChannelId;
+        }
         return $result;
     }
 
@@ -99,9 +109,8 @@ readonly class TelegramChannelPostAdaptor
         $hasUnderscore = array_reduce($lines, fn($carry, $line) => $carry || trim($line) === '_', false);
         if (!$hasUnderscore) {
             array_unshift($lines, '_');
-            array_unshift($lines, 'codeChannel');
+            array_unshift($lines, 'simpleCodeChannel');
         }
-
         $isOnlyPost = false;
         $postText = [];
         foreach ($lines as $line) {
@@ -111,33 +120,33 @@ readonly class TelegramChannelPostAdaptor
             } else {
                 if ($line === '_') {
                     $isOnlyPost = true; // Начинается текст поста
-                } elseif (empty($result->codeChannel) && $line !== '') {
+                } elseif (!$result->keyExist('codeChannel') && $line !== '') {
                     $result->codeChannel = $line; // Первая строка — это код канала
                 } elseif (stripos($line, 'приоритет:') !== false) {
                     $result->priority = (int)preg_replace('/\D/', '', $line); // Забираем приоритет
                 }
             }
         }
-
         if (empty($postText)) {
             $telegramChannelPostAdaptorDto->errors[] = 'Не указан текст поста. Обратитесь к инструкции.';
             return $result;
         }
 
         $result->text = implode("\n", $postText);
-
         // Проверяем корректность кода канала и его статуса
         if ($result->keyExist('codeChannel')) {
             $channelFilter = new ChannelFilter();
             $channelFilter->codes = [$result->codeChannel];
             $channel = $this->channelRepository->findByFilter($channelFilter)->first();
-
+            $codes = $this->channelRepository->getPublishChannelCodes();
             if (!$channel) {
-                $telegramChannelPostAdaptorDto->errors[] = 'Некорректный код канала: ' . $result->codeChannel;
+                $telegramChannelPostAdaptorDto->errors[] = 'Некорректный код канала, варианты: ' . implode(', ', $codes);
             } elseif ($channel->type_const !== ChannelType::TARGET) {
                 $telegramChannelPostAdaptorDto->errors[] = 'Канал с кодом ' . $result->codeChannel . ' не предназначен для публикаций';
             } elseif (!in_array($channel->status_const, [ChannelStatus::ACTIVE, ChannelStatus::PAUSED])) {
                 $telegramChannelPostAdaptorDto->errors[] = 'Канал ' . $result->codeChannel . ' должен быть активен или на паузе';
+            } else {
+                $result->targetChannelId = $channel->id;
             }
         }
 

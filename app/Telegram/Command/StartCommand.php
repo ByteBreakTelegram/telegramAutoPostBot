@@ -27,6 +27,13 @@ final class StartCommand extends Command
         // Поиск пользователя по его Telegram ID
         /** @var User|null $user */
         $user = User::query()->where('telegram_chat_id', $this->message->getFrom()->getId())->first();
+        if (User::query()->exists()) {
+            $this->replyWithMessage(
+                'Меню обновлено',
+                TelegramMainMenu::main($user) // Получаем главное меню для пользователя
+            );
+            return;
+        }
         $isNew = false; // Флаг для проверки, новый ли пользователь
 
         if (!$user) {
