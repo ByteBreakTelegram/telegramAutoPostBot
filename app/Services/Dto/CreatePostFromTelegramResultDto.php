@@ -30,7 +30,7 @@ class CreatePostFromTelegramResultDto extends Dto
     public function getTextForTelegram(): string
     {
         $result = [];
-        $result[] = $this->codeChannel;
+        $result[] = '#'.$this->codeChannel;
         $result[] = 'Приоритет: ' . ($this->keyExist('priority') ? $this->priority : 0);
         $result[] = 'Статус: ' . ($this->keyExist('postStatus') ? $this->postStatus : '-');
         if ($this->keyExist('errors') && $this->errors !== []) {

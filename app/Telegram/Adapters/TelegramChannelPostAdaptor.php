@@ -121,7 +121,7 @@ readonly class TelegramChannelPostAdaptor
                 if ($line === '_') {
                     $isOnlyPost = true; // Начинается текст поста
                 } elseif (!$result->keyExist('codeChannel') && $line !== '') {
-                    $result->codeChannel = $line; // Первая строка — это код канала
+                    $result->codeChannel = trim($line, '#'); // Первая строка — это код канала
                 } elseif (stripos($line, 'приоритет:') !== false) {
                     $result->priority = (int)preg_replace('/\D/', '', $line); // Забираем приоритет
                 }
