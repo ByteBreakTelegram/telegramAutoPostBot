@@ -9,6 +9,7 @@
 5. В директории с кодом набираем docker-compose up -d
 6. Заходим в php контейнер docker-compose exec php bash
 7. Выполняем composer install . ВНИМАНИЕ на проде нужно выполнять composer install --no-dev и APP_DEBUG должен быть false
+8. Выполняем php artisan migrate
 
 
 Проект соберется и запустится.
