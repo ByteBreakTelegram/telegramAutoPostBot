@@ -37,4 +37,10 @@ class TelegramChannelPostAdaptorContentDto extends Dto
      * @var string|null
      */
     public ?string $codeChannel;
+    /**
+     * Код канала, в который должен быть опубликован пост.
+     * Этот код извлекается из текста сообщения.
+     * @var int|null
+     */
+    public ?int $targetChannelId;
 }

@@ -62,16 +62,14 @@ readonly class CreatePostFromTelegramService
         if ($mediaGroupId) {
             $channelFilter = new ChannelPostFilter();
             $channelFilter->telegram_media_group_ids = [$mediaGroupId];
-            $channelPost = $this->channelPostRepository->findByFilter($channelFilter)->first();
+            $channelPost = $this->channelPostRepository->findByFilter($channelFilter)->orderBy('id')->first();
         }
 
         // Если пост не найден, создаем или обновляем его
-        if (!$channelPost) {
-            $channelPostModelDto = $this->getChannelPostModelDto($telegramChannelPostAdaptorDto);
-            $channelPost = $telegramChannelPostAdaptorDto->channelPost
-                ? $this->channelPostModelService->update($telegramChannelPostAdaptorDto->channelPost, $channelPostModelDto)
-                : $this->channelPostModelService->create($channelPostModelDto);
-        }
+        $channelPostModelDto = $this->getChannelPostModelDto($telegramChannelPostAdaptorDto);
+        $channelPost = $telegramChannelPostAdaptorDto->channelPost
+            ? $this->channelPostModelService->update($telegramChannelPostAdaptorDto->channelPost, $channelPostModelDto)
+            : $this->channelPostModelService->create($channelPostModelDto);
 
         // Синхронизируем файлы, прикрепленные к посту
         $this->syncFiles($channelPost, $message);
@@ -80,11 +78,11 @@ readonly class CreatePostFromTelegramService
         if ($telegramChannelPostAdaptorDto->keyExist('errors')) {
             $result->errors = $telegramChannelPostAdaptorDto->errors;
         }
-
         // Возвращаем основную информацию для последующего использования
-        $result->codeChannel = $telegramChannelPostAdaptorDto->channelPost?->targetChannel?->code ?? 'codeChannel';
+        $result->codeChannel = $telegramChannelPostAdaptorDto->channelPost?->targetChannel?->code ?? 'simpleCodeChannel';
         $result->postText = $telegramChannelPostAdaptorDto->content->text ?? '';
         $result->priority = $telegramChannelPostAdaptorDto->content->priority ?? 0;
+        $result->postStatus = $channelPost->status_const->label();
 
         return $result;
     }
@@ -204,7 +202,7 @@ readonly class CreatePostFromTelegramService
         $result->telegram_media_group_id = $dto->mediaGroupId;
 
         // Устанавливаем статус поста в зависимости от наличия ошибок
-        $result->status_const = empty($dto->errors) ? ChannelPostStatus::QUEUE : ChannelPostStatus::PAUSED;
+        $result->status_const = $dto->errors === [] ? ChannelPostStatus::QUEUE : ChannelPostStatus::PAUSED;
 
         // Присваиваем контент и приоритет
         $result->target_channel_id = $dto->targetChannelId;

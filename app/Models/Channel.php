@@ -22,6 +22,7 @@ use App\Models\Core\Model;
  * @property null|ChannelPostInterval $post_interval_const
  * @property boolean $is_business_hours
  * @property null|string $post_time
+ * @property Carbon $last_public_post_at
  * @property Carbon $created_at
  * @property Carbon $updated_at
  *
@@ -46,6 +47,7 @@ class Channel extends Model
         'post_interval_const',
         'is_business_hours',
         'post_time',
+        'last_public_post_at',
     ];
 
     /**
@@ -63,6 +65,7 @@ class Channel extends Model
         'post_interval_const' => ChannelPostInterval::class,
         'is_business_hours' => 'bool',
         'post_time' => 'string',
+        'last_public_post_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -79,6 +82,7 @@ class Channel extends Model
             'post_interval_const' => trans('Интервал публикаций'),
             'is_business_hours' => trans('Только в рабочие часы'),
             'post_time' => trans('Время публикаций через точку с запятой'),
+            'last_public_post_at' => trans('Дата последнего опубликованного поста'),
             'created_at' => trans('Создано'),
             'updated_at' => trans('Обновлено'),
         ];

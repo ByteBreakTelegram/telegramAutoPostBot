@@ -21,15 +21,12 @@ class TelegramMainMenu
         $btmInline = [
             [
                 [
-                    'text' => trans('Новый пост'),
-                ],
-                [
                     'text' => trans('❓ Помощь'),
                 ],
             ],
             [
                 [
-                    'text' => trans('Настройки'),
+                    'text' => trans('Настройка каналов'),
                 ],
             ],
         ];

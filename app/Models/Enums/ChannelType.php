@@ -13,8 +13,8 @@ enum ChannelType: int implements HasLabel
     public function label(): string
     {
         return match ($this) {
-            self::SOURCE => trans('Каналы как источник публикаций'),
-            self::TARGET => trans('Каналы куда публиковать'),
+            self::SOURCE => trans('Источник публикаций'),
+            self::TARGET => trans('Для публикаций'),
         };
     }
 }

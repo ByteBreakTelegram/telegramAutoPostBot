@@ -8,6 +8,7 @@ namespace App\Services\Dto;
 
 use App\Components\Dto\Dto;
 use App\Models\Enums\ChannelPostStatus;
+use Carbon\Carbon;
 
 class ChannelPostModelDto extends Dto
 {
@@ -20,4 +21,5 @@ class ChannelPostModelDto extends Dto
     public int $target_telegram_message_id;
     public string $content;
     public int $priority;
+    public ?Carbon $published_at;
 }

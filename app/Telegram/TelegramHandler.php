@@ -7,6 +7,7 @@ namespace App\Telegram;
 use App\Models\TelegramCache;
 use App\Services\CreatePostFromTelegramService;
 use App\Telegram\Command\Base\Command;
+use App\Telegram\Command\ChannelSettingCommand;
 use App\Telegram\Command\HelpCommand;
 use App\Telegram\Command\StartCommand;
 use TelegramBot\Api\BotApi;
@@ -59,10 +60,9 @@ class TelegramHandler
                 $data = TelegramCache::getValue($keyUserId, $key);
 
                 if (is_array($data) && array_key_exists('classCommand', $data)) {
-                    if ($data['classCommand'] === HelpInstructionCommand::class) {
-                        // Обработка команды HelpInstructionCommand через callback
+                    if ($data['classCommand'] === ChannelSettingCommand::class) {
                         $command = app(
-                            HelpInstructionCommand::class,
+                            ChannelSettingCommand::class,
                             [
                                 'bot' => $bot,
                                 'message' => $callbackQuery->getMessage(),
@@ -109,21 +109,30 @@ class TelegramHandler
 
                 // Создание поста из сообщения Telegram
                 $result = $createPostFromTelegramService->execute($channelPost);
+                if ($result->isLoadData() === false) {
+                    return;
+                }
 
                 // Если в результате есть ошибки, редактируем сообщение в Telegram
-                if ($result->keyExist('errors')) {
-                    if ($isMediaMessage) {
-                        $bot->editMessageCaption(
-                            $channelPost->getChat()->getId(),
-                            $channelPost->getMessageId(),
-                            $result->getTextForTelegram()
-                        );
-                    } else {
-                        $bot->editMessageText(
-                            $channelPost->getChat()->getId(),
-                            $channelPost->getMessageId(),
-                            $result->getTextForTelegram()
-                        );
+                try {
+                    if (($isMediaMessage && $channelPost->getCaption() !== null) || (!$isMediaMessage && $channelPost->getText() !== null)) {
+                        if ($isMediaMessage) {
+                            $bot->editMessageCaption(
+                                $channelPost->getChat()->getId(),
+                                $channelPost->getMessageId(),
+                                $result->getTextForTelegram()
+                            );
+                        } else {
+                            $bot->editMessageText(
+                                $channelPost->getChat()->getId(),
+                                $channelPost->getMessageId(),
+                                $result->getTextForTelegram()
+                            );
+                        }
+                    }
+                } catch (\Throwable $exception) {
+                    if (mb_strpos($exception->getMessage(), 'specified new message content and reply markup are exactly the same as a current content and reply markup of the message') === false) {
+                        throw $exception;
                     }
                 }
                 return;
@@ -136,6 +145,12 @@ class TelegramHandler
                 if (in_array($message->getText(), HelpCommand::$names)) {
                     /** @var Command $command */
                     $command = app(HelpCommand::class, ['bot' => $bot, 'message' => $message]);
+                    app()->call([$command, 'hundler']);
+                    return;
+                }
+                if (in_array($message->getText(), ChannelSettingCommand::$names)) {
+                    /** @var Command $command */
+                    $command = app(ChannelSettingCommand::class, ['bot' => $bot, 'message' => $message]);
                     app()->call([$command, 'hundler']);
                     return;
                 }

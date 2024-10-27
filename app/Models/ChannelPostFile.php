@@ -7,6 +7,7 @@ use App\Models\Enums\ChannelPostFileFileType;
 use App\Models\Traits\TableName;
 use Carbon\Carbon;
 use App\Models\Core\Model;
+use Storage;
 
 /**
  * В таблице хранятся файлы постов из каналов
@@ -79,6 +80,25 @@ class ChannelPostFile extends Model
     | FUNCTIONS
     |--------------------------------------------------------------------------
     */
+    /**
+     * Получить полный путь к файлу.
+     *
+     * @return string
+     */
+    public function getFullPath(): string
+    {
+       return Storage::path($this->file_path);
+    }
+
+    /**
+     * Получить содержимое файла
+     *
+     * @return string
+     */
+    public function getContent(): string
+    {
+       return Storage::get($this->file_path);
+    }
 
     /*
     |--------------------------------------------------------------------------
